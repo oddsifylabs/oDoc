@@ -64,7 +64,7 @@ cd oDoc
 
 ### Option 3 — Use the live demo
 
-Visit **[https://odoc.github.io/oDoc](https://odoc.github.io/oDoc)** — no download needed.
+Visit **(ODoc](https://odoc.oddsifylabs.com/))** — no download needed.
 
 ---
 

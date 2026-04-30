@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="oDoc_icon_logo.jpeg" alt="oDoc Logo" width="120" height="120" style="border-radius: 22px;" />
+<img src="oDoclogo.jpeg" alt="oDoc Logo" width="120" height="120" style="border-radius: 22px;" />
 
 # oDoc
 
@@ -64,7 +64,7 @@ cd oDoc
 
 ### Option 3 — Use the live demo
 
-Visit **(ODoc](https://odoc.oddsifylabs.com/))** — no download needed.
+Visit **[ODoc](https://odoc.oddsifylabs.com/)** — no download needed.
 
 ---
 

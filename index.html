@@ -1,7 +1,7 @@
 <!--
 oDoc - Document Reader & Editor
 MIT License
-Copyright (c) 2024 oDoc Contributors
+Copyright (c) 2026 Oddsify Labs, A Collins & Collins Technologies Company
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -486,9 +486,35 @@ Copyright (c) 2024 oDoc Contributors
             .sidebar { width: 220px; }
             .preview-pane { padding: 1.5rem; }
         }
+
+        /* ─── DISCLAIMER BANNER ─── */
+        .disclaimer-banner {
+            background: linear-gradient(135deg, rgba(37,99,212,0.12), rgba(26,37,64,0.9));
+            border-bottom: 1px solid rgba(96,165,250,0.25);
+            padding: 0.6rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            font-size: 11px;
+            color: var(--text3);
+            line-height: 1.5;
+        }
+        .disclaimer-banner strong { color: var(--text2); }
+        .disclaimer-dismiss {
+            background: none; border: 1px solid var(--border); border-radius: 5px;
+            color: var(--text3); font-size: 10px; padding: 2px 8px; cursor: pointer;
+            font-family: 'Outfit', sans-serif; white-space: nowrap; transition: all 0.15s;
+        }
+        .disclaimer-dismiss:hover { border-color: var(--border-bright); color: var(--text2); }
+        .disclaimer-banner.hidden { display: none; }
     </style>
 </head>
 <body>
+    <div class="disclaimer-banner" id="disclaimerBanner">
+        <span>⚠️ <strong>Disclaimer:</strong> All files are stored in memory only and are permanently removed when you close or refresh this browser session. oDoc and Oddsify Labs are not liable for any data loss, corruption, or errors of any kind arising from viewing or editing files within this application.</span>
+        <button class="disclaimer-dismiss" onclick="document.getElementById('disclaimerBanner').classList.add('hidden')">Dismiss</button>
+    </div>
     <div class="drop-overlay" id="dropOverlay">
         <div class="drop-message">📂 Drop files here</div>
     </div>
@@ -508,7 +534,7 @@ Copyright (c) 2024 oDoc Contributors
 
             <div class="sidebar-section">
                 <div class="sidebar-section-title">Files</div>
-                <input type="file" id="fileInput" class="file-input-hidden" accept=".md,.txt,.epub,.markdown,.html,.htm,.pdf" multiple>
+                <input type="file" id="fileInput" class="file-input-hidden" accept=".md,.txt,.epub,.markdown,.html,.htm,.csv,.json" multiple>
                 <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
                     <span>＋</span> Add Files
                 </button>
@@ -550,10 +576,10 @@ Copyright (c) 2024 oDoc Contributors
                     <div class="preview-pane active" id="previewPane">
                         <div class="preview-content" id="previewContent">
                             <h1>Welcome to oDoc 👋</h1>
-                            <p>A clean, fast document reader and editor. Supports <strong>Markdown</strong>, <strong>HTML</strong>, <strong>PDF</strong>, <strong>EPUB</strong>, and plain text.</p>
+                            <p>A clean, fast document reader and editor. Supports <strong>Markdown</strong>, <strong>HTML</strong>, <strong>CSV</strong>, <strong>JSON</strong>, <strong>EPUB</strong>, and plain text.</p>
                             <p>Use the <em>+ Add Files</em> button in the sidebar, or drag and drop files anywhere on the window to get started.</p>
                             <hr>
-                            <p style="color:var(--text3);font-size:13px;">Supported formats: .md · .txt · .html · .pdf · .epub</p>
+                            <p style="color:var(--text3);font-size:13px;">Supported formats: .md · .txt · .html · .epub · .csv · .json</p>
                         </div>
                     </div>
                 </div>
@@ -580,19 +606,18 @@ Copyright (c) 2024 oDoc Contributors
             <span class="footer-brand">oDoc</span>
             <div class="footer-divider"></div>
             <span>v1.0</span>
+            <div class="footer-divider"></div>
+            <span>© 2026 All Rights Reserved | Oddsify Labs, A Collins &amp; Collins Technologies Company</span>
         </div>
         <div class="footer-links">
-            <a href="https://github.com/oDoc/oDoc" class="footer-link" target="_blank">GitHub</a>
-            <a href="https://github.com/oDoc/oDoc/blob/main/LICENSE" class="footer-link" target="_blank">MIT License</a>
-            <a href="https://github.com/oDoc/oDoc/issues" class="footer-link" target="_blank">Report Issue</a>
+            <a href="https://github.com/oddsifylabs/oDoc" class="footer-link" target="_blank">GitHub</a>
+            <a href="https://github.com/oddsifylabs/oDoc/LICENSE" class="footer-link" target="_blank">MIT License</a>
+            <a href="https://github.com/oddsifylabs/oDoc/ISSUES" class="footer-link" target="_blank">Report Issue</a>
         </div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script>
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-
         let files = {}, currentFile = null, fileToDelete = null;
         const editor = document.getElementById('editor');
         const fileInput = document.getElementById('fileInput');
@@ -618,18 +643,17 @@ Copyright (c) 2024 oDoc Contributors
         async function processFiles(uploaded) {
             for (const file of uploaded) {
                 const ext = file.name.split('.').pop().toLowerCase();
-                if (!['md','txt','markdown','epub','html','htm','pdf'].includes(ext)) continue;
+                if (!['md','txt','markdown','epub','html','htm','csv','json'].includes(ext)) continue;
                 const reader = new FileReader();
                 reader.onload = async ev => {
                     let content = '';
                     if (ext === 'epub') content = await parseEpub(ev.target.result);
-                    else if (ext === 'pdf') content = await parsePdf(ev.target.result);
                     else content = ev.target.result;
                     files[file.name] = { content, ext, size: file.size };
                     renderFileList();
                     if (!currentFile) openFile(file.name);
                 };
-                (ext === 'epub' || ext === 'pdf') ? reader.readAsArrayBuffer(file) : reader.readAsText(file);
+                (ext === 'epub') ? reader.readAsArrayBuffer(file) : reader.readAsText(file);
             }
         }
 
@@ -647,25 +671,13 @@ Copyright (c) 2024 oDoc Contributors
             } catch { return 'Error reading EPUB file.'; }
         }
 
-        async function parsePdf(buf) {
-            try {
-                const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
-                let out = '';
-                for (let i = 1; i <= pdf.numPages; i++) {
-                    const page = await pdf.getPage(i);
-                    const tc = await page.getTextContent();
-                    out += tc.items.map(it => it.str).join(' ') + '\n\n--- Page ' + i + ' ---\n\n';
-                }
-                return out.trim() || 'Could not extract PDF content';
-            } catch { return 'Error reading PDF file.'; }
-        }
 
         function extractText(html) {
             const p = new DOMParser();
             return p.parseFromString(html, 'text/html').body.innerText;
         }
 
-        const ICONS = { epub:'📖', md:'📝', markdown:'📝', html:'🌐', htm:'🌐', pdf:'📕' };
+        const ICONS = { epub:'📖', md:'📝', markdown:'📝', html:'🌐', htm:'🌐', csv:'📊', json:'📋' };
 
         function renderFileList() {
             const names = Object.keys(files);
@@ -722,7 +734,29 @@ Copyright (c) 2024 oDoc Contributors
             const c = editor.value, pv = document.getElementById('previewContent');
             if (currentFile && /\.(md|markdown)$/.test(currentFile)) pv.innerHTML = mdToHtml(c);
             else if (currentFile && /\.(html|htm)$/.test(currentFile)) pv.innerHTML = sanitize(c);
+            else if (currentFile && /\.csv$/.test(currentFile)) pv.innerHTML = csvToHtml(c);
+            else if (currentFile && /\.json$/.test(currentFile)) pv.innerHTML = jsonToHtml(c);
             else pv.innerHTML = `<pre>${esc(c)}</pre>`;
+        }
+
+        function csvToHtml(csv) {
+            const rows = csv.trim().split('\n').map(r => r.split(','));
+            if (!rows.length) return '<p>Empty CSV</p>';
+            let html = '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:13px">';
+            html += '<thead><tr>' + rows[0].map(h => `<th style="padding:0.6rem 0.875rem;background:var(--bg3);color:var(--text);text-align:left;border-bottom:2px solid var(--border-bright);white-space:nowrap">${esc(h.trim())}</th>`).join('') + '</tr></thead>';
+            html += '<tbody>' + rows.slice(1).map((r,i) => `<tr style="background:${i%2===0?'var(--bg)':'var(--bg2)'}">` + r.map(c => `<td style="padding:0.5rem 0.875rem;border-bottom:1px solid var(--border);color:var(--text2)">${esc(c.trim())}</td>`).join('') + '</tr>').join('') + '</tbody>';
+            html += '</table></div>';
+            return html;
+        }
+
+        function jsonToHtml(json) {
+            try {
+                const parsed = JSON.parse(json);
+                const pretty = JSON.stringify(parsed, null, 2);
+                return `<pre style="background:var(--bg2);padding:1.5rem;border-radius:10px;border:1px solid var(--border);overflow-x:auto;font-size:13px;line-height:1.7;color:var(--accent)">${esc(pretty)}</pre>`;
+            } catch(e) {
+                return `<div style="color:var(--danger);padding:1rem;background:rgba(239,68,68,0.1);border-radius:8px;border:1px solid rgba(239,68,68,0.3)">⚠ Invalid JSON: ${esc(e.message)}</div><pre style="margin-top:1rem">${esc(json)}</pre>`;
+            }
         }
 
         function mdToHtml(md) {
